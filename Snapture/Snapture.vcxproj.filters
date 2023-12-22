@@ -13,8 +13,11 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Header Files\DirectX">
-      <UniqueIdentifier>{feab122a-6830-41de-bd19-b13fbad4a6dd}</UniqueIdentifier>
+    <Filter Include="Header Files\Native">
+      <UniqueIdentifier>{286196b4-45e5-4aaf-b970-052039c034c3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Managed">
+      <UniqueIdentifier>{b26243ef-2baf-4f57-aeba-d1f7aaf151cc}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -24,26 +27,26 @@
     <ClInclude Include="pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DX.h">
-      <Filter>Header Files\DirectX</Filter>
-    </ClInclude>
-    <ClInclude Include="DXCapture.h">
-      <Filter>Header Files\DirectX</Filter>
-    </ClInclude>
     <ClInclude Include="Dpi.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Managed</Filter>
     </ClInclude>
     <ClInclude Include="MONITORDESC.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Native</Filter>
     </ClInclude>
     <ClInclude Include="MonitorInfor.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Managed</Filter>
     </ClInclude>
     <ClInclude Include="NativeMonitorInfo.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Native</Filter>
     </ClInclude>
     <ClInclude Include="SnaptureCLI.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Managed</Filter>
+    </ClInclude>
+    <ClInclude Include="DX.h">
+      <Filter>Header Files\Native</Filter>
+    </ClInclude>
+    <ClInclude Include="DXCapture.h">
+      <Filter>Header Files\Managed</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

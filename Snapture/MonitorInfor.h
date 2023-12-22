@@ -11,7 +11,7 @@ using namespace System::Collections::Generic;
 using namespace System::Windows;
 
 namespace com {
-	namespace HellStormGames 
+	namespace HellstormGames 
 	{
 		namespace Imaging 
 		{
@@ -23,7 +23,7 @@ namespace com {
 				property String^ Name;
 				property String^ ModelName;
 				property System::Drawing::Rectangle^ ScreenRect;
-				property com::HellStormGames::Imaging::Dpi^ Dpi;
+				property Dpi^ Dpi;
 			private:
 			protected:
 

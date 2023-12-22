@@ -13,10 +13,10 @@
 
 using namespace System;
 using namespace System::Drawing;
-using namespace com::HellStormGames::Imaging;
+using namespace com::HellstormGames::Imaging;
 
 namespace com {
-	namespace HellStormGames 
+	namespace HellstormGames 
 	{
 		namespace ScreenCapture 
 		{

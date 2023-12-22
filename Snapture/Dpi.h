@@ -4,7 +4,7 @@
 #include <Windows.h>
 using namespace System;
 namespace com {
-	namespace HellStormGames {
+	namespace HellstormGames {
 		namespace Imaging {
 
 			public ref class Dpi 
