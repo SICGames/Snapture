@@ -1,76 +1,87 @@
 #pragma once
 #pragma unmanaged 
 #include <Windows.h>
+#include <ShellScalingApi.h>
 
 #pragma comment(lib, "gdi32.lib")
 #pragma comment(lib, "user32.lib")
+#pragma comment(lib, "Shcore.lib")
 
 #pragma managed
-#include "DXCapture.h"
+#include "DXCapturer.h"
+#include "MonitorInfor.h"
 
 using namespace System;
 using namespace System::Drawing;
+using namespace com::HellStormGames::Imaging;
 
+namespace com {
+	namespace HellStormGames 
+	{
+		namespace ScreenCapture 
+		{
 #pragma region Global Declarations
+			public enum FrameCapturingState {
+				IDLE,
+				STARTED,
+				STOPPED,
+				CAPTURING
+			};
 
-public enum FrameCapturingState {
-	IDLE,
-	STARTED,
-	STOPPED,
-	CAPTURING
-};
-
-public enum class  FrameCapturingMethod {
-	GDI,
-	DX
-};
+			public enum class  FrameCapturingMethod {
+				GDI,
+				DX
+			};
 #pragma endregion
 
 #pragma region Event Handlers And Arguments
 
-public ref class FrameCapturedEventArgs : EventArgs {
-public:
-	property System::Drawing::Bitmap^ ScreenCapturedBitmap;
-	property int FrameCount;
-	FrameCapturedEventArgs(System::Drawing::Bitmap^ bitmap, int FrameCount) {
-		this->ScreenCapturedBitmap = bitmap;
-		this->FrameCount = FrameCount;
-	}
-protected:
+			public ref class FrameCapturedEventArgs : EventArgs {
+			public:
+				property System::Drawing::Bitmap^ ScreenCapturedBitmap;
+				property int FrameCount;
+				FrameCapturedEventArgs(System::Drawing::Bitmap^ bitmap, int FrameCount) {
+					this->ScreenCapturedBitmap = bitmap;
+					this->FrameCount = FrameCount;
+				}
+			protected:
 
-};
-public ref class FrameCapturingEventArgs : EventArgs {
-public:
-	FrameCapturingEventArgs()
-	{
+			};
+			public ref class FrameCapturingEventArgs : EventArgs {
+			public:
+				FrameCapturingEventArgs()
+				{
 
-	}
-};
-public ref class FrameChangedEventArgs : EventArgs {
-public:
-	FrameChangedEventArgs() {
+				}
+			};
+			public ref class FrameChangedEventArgs : EventArgs {
+			public:
+				FrameChangedEventArgs() {
 
-	}
-};
+				}
+			};
 
 #pragma endregion
-
-
-namespace com
-{
-	namespace HellScape
-	{
-		namespace ScreenCapture
-		{
-			public ref class Snapture abstract sealed
+#pragma region Snapture Class
+			public ref class Snapture
 			{
 			public:
-				static event EventHandler<FrameCapturedEventArgs^>^ onFrameCaptured;
-				static event EventHandler<FrameCapturingEventArgs^>^ onFrameCapturingStarted;
-				static event EventHandler<FrameCapturingEventArgs^>^ onFrameCapturingStopped;
-				static event EventHandler<FrameChangedEventArgs^>^ onFrameChanged;
+				event EventHandler<FrameCapturedEventArgs^>^ onFrameCaptured;
+				event EventHandler<FrameCapturingEventArgs^>^ onFrameCapturingStarted;
+				event EventHandler<FrameCapturingEventArgs^>^ onFrameCapturingStopped;
+				event EventHandler<FrameChangedEventArgs^>^ onFrameChanged;
 
-				property static double FPS
+				property Int32 Resolution 
+				{
+					Int32 get() {
+						return _Resolution;
+					}
+				private:
+					void set(Int32 value) {
+						_Resolution = value;
+					}
+				}
+				property  double FPS
 				{
 					double get() {
 						return defaultFPS;
@@ -79,22 +90,76 @@ namespace com
 						defaultFPS = value;
 					}
 				}
-				property static bool isActive;
-				property static int FrameCount;
-				property static FrameCapturingState CapturingState;
-				property static int ScreenWidth
+
+				property bool isDPIAware;
+				property  bool isActive;
+				property  int FrameCount;
+				property  FrameCapturingState CapturingState;
+				property int ScreenWidth
 				{
-					int get() {
-						return GetSystemMetrics(SM_CXSCREEN);
+					int get() 
+					{
+						return GetSystemMetricsForDpi(SM_CXSCREEN, _monitorInfo->Monitors[CurrentMonitorIndex]->Dpi->X); //GetSystemMetrics(SM_CXSCREEN);
 					}
 				}
-				property static int ScreenHeight {
-					int get() {
-						return GetSystemMetrics(SM_CYSCREEN);
+				property int ScreenHeight 
+				{
+					int get() 
+					{
+						return GetSystemMetricsForDpi(SM_CYSCREEN, _monitorInfo->Monitors[CurrentMonitorIndex]->Dpi->X);
 					}
 				}
 
-				static void Start(FrameCapturingMethod captureMethod)
+				property UINT CurrentMonitorIndex;
+				
+				property Monitor^ MonitorInfo 
+				{
+					Monitor^ get() 
+					{
+						return _monitorInfo;
+					}
+				private:
+					void set(Monitor^ value) {
+						_monitorInfo = value;
+					}
+				}
+				
+				static property Snapture^ Instance {
+					Snapture^ get() {
+						return _instance;
+					}
+				}
+				Snapture() 
+				{
+					if (_instance == nullptr)
+						_instance = this;
+
+					_monitorInfo = gcnew Monitor();
+					CurrentMonitorIndex = 0;
+				}
+				Snapture(int monitorIndex) 
+				{
+					if (_instance == nullptr)
+						_instance = this;
+
+					_monitorInfo = gcnew Monitor();
+					CurrentMonitorIndex = monitorIndex;
+					
+				}
+				~Snapture() 
+				{
+					if (_monitorInfo->Monitors != nullptr) {
+						_monitorInfo->Monitors->Clear();
+						_monitorInfo->Monitors = nullptr;
+					}
+					delete _monitorInfo;
+				}
+
+				void SetBitmapResolution(Int32 value) 
+				{
+					Resolution = value;
+				}
+				 void Start(FrameCapturingMethod captureMethod)
 				{
 					isActive = true;
 					CapturingState = FrameCapturingState::STARTED;
@@ -107,57 +172,65 @@ namespace com
 					}
 					onFrameCapturingStarted(NULL, gcnew FrameCapturingEventArgs());
 
+					//-- we should also obtain monitors information as well.
 					//BeginCapturing();
 				}
-				static void CaptureDesktop()
+
+
+				 void CaptureDesktop()
 				{
 					CaptureDesktopFrame();
 				}
 
-				static void CaptureRegion(System::Drawing::Point^ start, System::Drawing::Size^ size) {
+				 void CaptureRegion(System::Drawing::Point^ start, System::Drawing::Size^ size) {
 					CaptureRegion(start->X, start->Y, start->X + size->Width, start->Y + size->Height);
 				}
-				static void CaptureRegion(System::Drawing::Rectangle^ rect) {
+				 void CaptureRegion(System::Drawing::Rectangle^ rect) {
 					CaptureRegion(rect->X, rect->Y, rect->Width, rect->Height);
 				}
 
-				static void CaptureRegion(int x, int y, int width, int height)
+				 void CaptureRegion(int x, int y, int width, int height)
 				{
 					CapturingState = FrameCapturingState::CAPTURING;
 					if (CurrentBitmap)
 						CurrentBitmap = nullptr;
 
 					CurrentBitmap = CaptureScreenRegion(x, y, width, height);
+					
 					if (CurrentBitmap != nullptr) {
 						onFrameCaptured(nullptr, gcnew FrameCapturedEventArgs(CurrentBitmap, FrameCount));
 						FrameCount = FrameCount + 1;
 					}
 				}
 
-				static void Stop() {
+				 void Stop() {
 					isActive = false;
 					CapturingState = FrameCapturingState::STOPPED;
 					onFrameCapturingStopped(0, gcnew FrameCapturingEventArgs());
 					EndCapturing();
 				}
-				static void Release()
+				 void Release()
 				{
 					ReleaseCapturer();
 				}
 			private:
-				static int defaultFPS = 30;
-				property static System::Drawing::Bitmap^ PreviousBitmap;
-				property static System::Drawing::Bitmap^ CurrentBitmap;
-				property static FrameCapturingMethod frameCaptureMethod;
+				int defaultFPS = 30;
+				Int32 _Resolution = 96;
+				property  System::Drawing::Bitmap^ PreviousBitmap;
+				property  System::Drawing::Bitmap^ CurrentBitmap;
+				property  FrameCapturingMethod frameCaptureMethod;
+				property Monitor ^_monitorInfo;
+				
+				DXCaptureer^ dxCapturer;
 
-				static DXCaptureer^ dxCapturer;
+				static Snapture^ _instance;
 
-				static bool initDXCapturing() {
+				 bool initDXCapturing() {
 					dxCapturer = gcnew DXCaptureer();
 					return dxCapturer->Initialize();
 				}
 
-				static void CaptureScreenRegionFrame(int x, int y, int width, int height)
+				 void CaptureScreenRegionFrame(int x, int y, int width, int height)
 				{
 					CapturingState = FrameCapturingState::CAPTURING;
 					if (CurrentBitmap)
@@ -177,7 +250,7 @@ namespace com
 
 				}
 
-				static void CaptureDesktopFrame()
+				 void CaptureDesktopFrame()
 				{
 					CapturingState = FrameCapturingState::CAPTURING;
 					if (CurrentBitmap)
@@ -199,7 +272,7 @@ namespace com
 					}
 				}
 
-				static void BeginCapturing()
+				 void BeginCapturing()
 				{
 					DateTime^ now = nullptr;
 					while (isActive)
@@ -221,43 +294,44 @@ namespace com
 					delete now;
 				}
 
-				static System::Drawing::Bitmap^ CaptureScreen()
+				 System::Drawing::Bitmap^ CaptureScreen()
 				{
-					int nScreenWidth = GetSystemMetrics(SM_CXSCREEN);
-					int nScreenHeight = GetSystemMetrics(SM_CYSCREEN);
-
+					int nScreenWidth = ScreenWidth, nScreenHeight = ScreenHeight;
+					 
 					System::Drawing::Bitmap^ bitmap = nullptr; //gcnew System::Drawing::Bitmap(nScreenWidth, nScreenHeight);
 
 					HWND hDesktopWnd = GetDesktopWindow();
-					HDC hDesktopDC = GetDC(hDesktopWnd);
+					HDC hDesktopDC =  GetDC(hDesktopWnd);
 					HDC hCaptureDC = CreateCompatibleDC(hDesktopDC);
 					HBITMAP hCaptureBitmap = CreateCompatibleBitmap(hDesktopDC,
 						nScreenWidth, nScreenHeight);
 					SelectObject(hCaptureDC, hCaptureBitmap);
+
 					BitBlt(hCaptureDC, 0, 0, nScreenWidth, nScreenHeight,
-						hDesktopDC, 0, 0, SRCCOPY | CAPTUREBLT);
+						hDesktopDC, 0, 0, SRCCOPY);
 
 					ReleaseDC(hDesktopWnd, hDesktopDC);
 					DeleteDC(hCaptureDC);
 
 					bitmap = System::Drawing::Image::FromHbitmap((IntPtr)hCaptureBitmap);
+					bitmap->SetResolution(Resolution, Resolution);
 					DeleteObject(hCaptureBitmap);
 					return bitmap;
 				}
 
-				static System::Drawing::Bitmap^ CaptureScreenRegion(System::Drawing::Point^ start, System::Drawing::Size size)
+				 System::Drawing::Bitmap^ CaptureScreenRegion(System::Drawing::Point^ start, System::Drawing::Size size)
 				{
 					return CaptureScreenRegion(start->X, start->Y, start->X + size.Width, start->Y + size.Height);
 				}
-				static System::Drawing::Bitmap^ CaptureScreenRegion(System::Drawing::Rectangle^ rect)
+				 System::Drawing::Bitmap^ CaptureScreenRegion(System::Drawing::Rectangle^ rect)
 				{
 					return CaptureScreenRegion(rect->X, rect->Y, rect->Width, rect->Height);
 				}
 
-				static System::Drawing::Bitmap^ CaptureScreenRegion(int x, int y, int width, int height)
+				 System::Drawing::Bitmap^ CaptureScreenRegion(int x, int y, int width, int height)
 				{
-					int nScreenWidth = GetSystemMetrics(SM_CXSCREEN);
-					int nScreenHeight = GetSystemMetrics(SM_CYSCREEN);
+					 int nScreenWidth = ScreenWidth;
+					 int nScreenHeight = ScreenHeight;
 
 					System::Drawing::Bitmap^ bitmap = nullptr; //gcnew System::Drawing::Bitmap(nScreenWidth, nScreenHeight);
 
@@ -277,15 +351,17 @@ namespace com
 					DeleteDC(hCaptureDC);
 
 					bitmap = System::Drawing::Image::FromHbitmap((IntPtr)hCaptureBitmap);
+					bitmap->SetResolution(Resolution, Resolution);
 					DeleteObject(hCaptureBitmap);
 					return bitmap;
 				}
 
-				static void EndCapturing()
+				 void EndCapturing()
 				{
 					isActive = false;
 
-					if (PreviousBitmap != nullptr) {
+					if (PreviousBitmap != nullptr) 
+					{
 						delete PreviousBitmap;
 					}
 					if (CurrentBitmap != nullptr) {
@@ -296,21 +372,24 @@ namespace com
 
 
 				}
-				static System::Drawing::Bitmap^ GetCapturedBitmap()
+				 System::Drawing::Bitmap^ GetCapturedBitmap()
 				{
 					return nullptr;
 				}
-				static void ReleaseCapturer() {
+				 void ReleaseCapturer() 
+				 {
 					if (dxCapturer)
 					{
 						dxCapturer->Release();
 						delete dxCapturer;
 					}
+
 				}
 			protected:
 
 			};
 
+#pragma endregion
 
 		}
 	}

@@ -40,14 +40,14 @@ public:
 	~DXCapturerUnmanaged() {
 
 	}
-	bool Initialize()
+	bool Initialize() 
 	{
 		D3D_FEATURE_LEVEL lFeatureLevel;
 		HRESULT hr(E_FAIL);
 		bool bInit = false;
 		UINT CreationFlags = 0;
 #if defined(_DEBUG) 
-		CreationFlags = D3D11_CREATE_DEVICE_DEBUG;
+			CreationFlags = D3D11_CREATE_DEVICE_DEBUG;
 #endif
 
 		// Create device
@@ -85,7 +85,7 @@ public:
 		}
 		IDXGIAdapter* pDXGIAdapter = NULL;
 		hr = pDXGIDevice->GetParent(__uuidof(IDXGIAdapter), reinterpret_cast<void**>(&pDXGIAdapter));
-		if (FAILED(hr))
+		if (FAILED(hr)) 
 		{
 			SAFE_RELEASE(pDXGIDevice);
 			return false;
@@ -95,7 +95,7 @@ public:
 
 		IDXGIOutput* pDXGIOutput = NULL;
 		hr = pDXGIAdapter->EnumOutputs(output, &pDXGIOutput);
-		if (FAILED(hr))
+		if (FAILED(hr)) 
 		{
 			SAFE_RELEASE(pDXGIAdapter);
 			return false;
@@ -121,11 +121,11 @@ public:
 		SAFE_RELEASE(pDXGIOutput1);
 
 		pDesktopDuplication->GetDesc(&pOutputDuplDesc);
-
-		/*
+		
+		
 		D3D11_TEXTURE2D_DESC desc = { 0 };
 
-
+		
 		desc.Width = pOutputDuplDesc.ModeDesc.Width;
 		desc.Height = pOutputDuplDesc.ModeDesc.Height;
 		desc.Format = pOutputDuplDesc.ModeDesc.Format;
@@ -149,9 +149,7 @@ public:
 			SAFE_RELEASE(pDesktopDuplication);
 			return false;
 		}
-		*/
-
-		/*
+		
 		desc.Width = pOutputDuplDesc.ModeDesc.Width;
 
 		desc.Height = pOutputDuplDesc.ModeDesc.Height;
@@ -179,12 +177,11 @@ public:
 			SAFE_RELEASE(pDesktopDuplication);
 			return false;
 		}
-		*/
 
 		return true;
 	}
 
-	HRESULT AcquireNextFrame(UINT timeout, IDXGIResource** resource)
+	HRESULT AcquireNextFrame(UINT timeout, IDXGIResource **resource) 
 	{
 		HRESULT hr = pDesktopDuplication->AcquireNextFrame(
 			timeout,
@@ -216,7 +213,7 @@ public:
 		desc.Usage = D3D11_USAGE_STAGING;
 
 		hr = pDevice->CreateTexture2D(&desc, NULL, &pDestImage);
-		if (FAILED(hr))
+		if (FAILED(hr)) 
 		{
 			OutputDebugString(L"DX::CaptureDesktop failed to create destination texture2d.\n");
 			return NULL;
@@ -238,37 +235,35 @@ public:
 				return NULL;
 			}
 		}
-
+		
 		if (pAcquiredDesktopImage) {
 			SAFE_RELEASE(pAcquiredDesktopImage);
 		}
 
 		//OutputDebugString(L"DX::AcquireNextFrame returned with SUCCESS.\n");
 		hr = lDesktopResource->QueryInterface(__uuidof(ID3D11Texture2D), (void**)&pAcquiredDesktopImage);
-
+		
 		SAFE_RELEASE(lDesktopResource);
 
 		pDeviceContext->CopyResource(pDestImage, pAcquiredDesktopImage);
 
-		if (pDestImage == nullptr) {
+		if (pDestImage == NULL) 
+		{
 			OutputDebugString(L"DX::CaptureDesktop->Destination Texture2D is NULL.\n");
 			SAFE_RELEASE(pAcquiredDesktopImage);
 			return NULL;
 		}
-
+		
 		SAFE_RELEASE(pAcquiredDesktopImage);
 
-		/*
+		
 		// Copy image into GDI drawing texture
 		pDeviceContext->CopyResource(pGDIImage, pAcquiredDesktopImage);
-
+		
 		// Copy image into CPU access texture
 		pDeviceContext->CopyResource(pDestImage, pGDIImage);
 		SAFE_RELEASE(pGDIImage);
-		*/
-
-		/*
-
+		
 		// Draw cursor image into GDI drawing texture
 		IDXGISurface1* lIDXGISurface1;
 		hr = pGDIImage->QueryInterface(IID_PPV_ARGS(&lIDXGISurface1));
@@ -307,22 +302,22 @@ public:
 			}
 
 		}
-		*/
+		
 		//-- causing memory leak.
 		HBITMAP gdiTexture = D3D11_CreateHBITMAP(pDestImage);
-
+		
 		if (gdiTexture)
 		{
 			hr = ReleaseFrame();
 
-			if (hr == S_OK)
+			if (hr == S_OK) 
 			{
 				if (pDestImage) {
 					pDestImage->Release();
 				}
 				return gdiTexture;
 			}
-			else
+			else 
 			{
 				OutputDebugString(L"Unable to release frame.");
 				return NULL;
@@ -334,21 +329,21 @@ public:
 	HBITMAP D3D11_CreateHBITMAP(_In_ ID3D11Texture2D* src) {
 
 		// Copy from CPU access texture to bitmap buffer
-
+		
 		D3D11_TEXTURE2D_DESC desc = { 0 };
 		src->GetDesc(&desc);
 
 		D3D11_MAPPED_SUBRESOURCE resource;
 		UINT subresource = D3D11CalcSubresource(0, 0, 0);
 		pDeviceContext->Map(src, subresource, D3D11_MAP_READ, 0, &resource);
-
+		
 		BYTE* pData = reinterpret_cast<BYTE*>(resource.pData);
 
 		HBITMAP hBitmapTexture = CreateCompatibleBitmap(GetDC(NULL), pOutputDuplDesc.ModeDesc.Width, pOutputDuplDesc.ModeDesc.Height);
 		SetBitmapBits(hBitmapTexture, pOutputDuplDesc.ModeDesc.Width * pOutputDuplDesc.ModeDesc.Height * 4, pData);
 
 		pDeviceContext->Unmap(src, NULL);
-
+		
 		pData = NULL;
 		resource = { 0 };
 
@@ -364,12 +359,12 @@ public:
 		}
 		return hr;
 	}
-	HGDIOBJ D3D11_CaptureRegion(ID3D11Texture2D** src, UINT sx, UINT sy, UINT source_width, UINT source_height, ID3D11Texture2D** dest)
+	HGDIOBJ D3D11_CaptureRegion(ID3D11Texture2D** src, UINT sx, UINT sy, UINT source_width, UINT source_height, ID3D11Texture2D** dest) 
 	{
 
 		return NULL;
 	}
-	void Release()
+	void Release() 
 	{
 		SAFE_RELEASE(pAcquiredDesktopImage);
 		//SAFE_RELEASE(pDestImage);
@@ -384,10 +379,10 @@ private:
 	ID3D11DeviceContext* pDeviceContext = 0;
 	IDXGIOutputDuplication* pDesktopDuplication = 0;
 	ID3D11Texture2D* pGDIImage = 0;
-	//ID3D11Texture2D* pDestImage = 0;
+	ID3D11Texture2D* pDestImage = 0;
 	DXGI_OUTPUT_DESC pOutputDesc;
 	DXGI_OUTDUPL_DESC pOutputDuplDesc;
-
+	
 	DXGI_OUTDUPL_FRAME_INFO lFrameInfo;
 protected:
 
