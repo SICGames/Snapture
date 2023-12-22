@@ -120,6 +120,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="BitmapExtentions.h" />
     <ClInclude Include="Dpi.h" />
     <ClInclude Include="DX.h" />
     <ClInclude Include="DXCapture.h" />

@@ -48,6 +48,9 @@
     <ClInclude Include="DXCapture.h">
       <Filter>Header Files\Managed</Filter>
     </ClInclude>
+    <ClInclude Include="BitmapExtentions.h">
+      <Filter>Header Files\Managed</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AssemblyInfo.cpp">
