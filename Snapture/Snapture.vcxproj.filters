@@ -51,6 +51,9 @@
     <ClInclude Include="BitmapExtentions.h">
       <Filter>Header Files\Managed</Filter>
     </ClInclude>
+    <ClInclude Include="NativeBitmap.h">
+      <Filter>Header Files\Native</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AssemblyInfo.cpp">

@@ -9,8 +9,10 @@ using namespace System::IO;
 namespace Drawing = System::Drawing;
 
 namespace com {
-	namespace HellstormGames {
-		namespace Imaging {
+	namespace HellstormGames 
+	{
+		namespace Imaging 
+		{
 			namespace Extensions 
 			{
 	
@@ -28,11 +30,10 @@ namespace com {
 							auto encoder = gcnew PngBitmapEncoder();
 							encoder->Frames->Add(BitmapFrame::Create(bitmapsource));
 							encoder->Save(ms);
-							auto bmp = reinterpret_cast<Drawing::Bitmap^>(Drawing::Bitmap::FromStream(ms);
+							auto bmp = reinterpret_cast<Drawing::Bitmap^>(Drawing::Bitmap::FromStream(ms));
 
 							encoder = nullptr;
 							ms->Close();
-							ms->Dispose();
 							ms = nullptr;
 							return bmp;
 						}
@@ -53,9 +54,7 @@ namespace com {
 							bitmapsource->StreamSource = ms;
 							bitmapsource->CacheOption = BitmapCacheOption::OnLoad;
 							bitmapsource->EndInit();
-
 							ms->Close();
-							ms->Dispose();
 							ms = nullptr;
 
 							return bitmapsource;

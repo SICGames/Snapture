@@ -8,12 +8,14 @@
 #pragma comment(lib, "Shcore.lib")
 
 #pragma managed
-#include "DXCapturer.h"
+#include "DXCapture.h"
 #include "MonitorInfor.h"
+#include "BitmapExtentions.h"
 
 using namespace System;
 using namespace System::Drawing;
 using namespace com::HellstormGames::Imaging;
+using namespace com::HellstormGames::Imaging::DirectX;
 
 namespace com {
 	namespace HellstormGames 
@@ -111,7 +113,6 @@ namespace com {
 				}
 
 				property UINT CurrentMonitorIndex;
-				
 				property Monitor^ MonitorInfo 
 				{
 					Monitor^ get() 
@@ -164,16 +165,14 @@ namespace com {
 					isActive = true;
 					CapturingState = FrameCapturingState::STARTED;
 					frameCaptureMethod = captureMethod;
-					if (frameCaptureMethod == FrameCapturingMethod::DX) {
+					if (frameCaptureMethod == FrameCapturingMethod::DX) 
+					{
 						if (!initDXCapturing())
 						{
 							throw gcnew Exception("DX Capturing Initialization failed.");
 						}
 					}
 					onFrameCapturingStarted(NULL, gcnew FrameCapturingEventArgs());
-
-					//-- we should also obtain monitors information as well.
-					//BeginCapturing();
 				}
 
 
@@ -221,12 +220,13 @@ namespace com {
 				property  FrameCapturingMethod frameCaptureMethod;
 				property Monitor ^_monitorInfo;
 				
-				DXCaptureer^ dxCapturer;
+				DXCapture^ dxCapturer;
 
 				static Snapture^ _instance;
 
-				 bool initDXCapturing() {
-					dxCapturer = gcnew DXCaptureer();
+				 bool initDXCapturing() 
+				 {
+					dxCapturer = gcnew DXCapture();
 					return dxCapturer->Initialize();
 				}
 
@@ -253,11 +253,14 @@ namespace com {
 				 void CaptureDesktopFrame()
 				{
 					CapturingState = FrameCapturingState::CAPTURING;
-					if (CurrentBitmap)
+					if (CurrentBitmap) 
+					{
 						CurrentBitmap = nullptr;
+					}
 
 					if (frameCaptureMethod == FrameCapturingMethod::DX)
-						CurrentBitmap = dxCapturer->GrabDesktopScreen();
+						if (dxCapturer->CaptureDesktop())
+							CurrentBitmap = dxCapturer->GetCapturedBitmap();
 					else
 						CurrentBitmap = CaptureScreen();
 

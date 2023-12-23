@@ -126,6 +126,7 @@
     <ClInclude Include="DXCapture.h" />
     <ClInclude Include="MONITORDESC.h" />
     <ClInclude Include="MonitorInfor.h" />
+    <ClInclude Include="NativeBitmap.h" />
     <ClInclude Include="NativeMonitorInfo.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Resource.h" />
@@ -153,6 +154,7 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Xml" />
+    <Reference Include="WindowsBase" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

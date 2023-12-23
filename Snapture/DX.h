@@ -11,8 +11,11 @@
 #include <Windows.h>
 #include <atlbase.h>
 #include <memory>
+#include "NativeBitmap.h"
 
 using namespace ATL;
+
+
 
 // Driver types supported
 D3D_DRIVER_TYPE gDriverTypes[] =
@@ -42,6 +45,18 @@ public:
 	}
 	bool Initialize() 
 	{
+		auto result = S_OK;
+		result = CoInitialize(NULL);
+
+		auto desktop = OpenInputDesktop(0, FALSE, GENERIC_ALL);
+		if (!desktop)
+			return false;
+
+		auto isDesktopAttached = SetThreadDesktop(desktop) != 0;
+
+		CloseDesktop(desktop);
+
+
 		D3D_FEATURE_LEVEL lFeatureLevel;
 		HRESULT hr(E_FAIL);
 		bool bInit = false;
@@ -71,10 +86,12 @@ public:
 				bInit = true;
 				break;
 			}
+
 			SAFE_RELEASE(pDevice);
 			SAFE_RELEASE(pDeviceContext);
 			bInit = false;
 		}
+
 		if (pDevice == NULL)
 			return false;
 
@@ -120,210 +137,95 @@ public:
 
 		SAFE_RELEASE(pDXGIOutput1);
 
-		pDesktopDuplication->GetDesc(&pOutputDuplDesc);
-		
-		
-		D3D11_TEXTURE2D_DESC desc = { 0 };
-
-		
-		desc.Width = pOutputDuplDesc.ModeDesc.Width;
-		desc.Height = pOutputDuplDesc.ModeDesc.Height;
-		desc.Format = pOutputDuplDesc.ModeDesc.Format;
-		desc.ArraySize = 1;
-		desc.BindFlags = D3D11_BIND_FLAG::D3D11_BIND_RENDER_TARGET;
-		desc.MiscFlags = D3D11_RESOURCE_MISC_GDI_COMPATIBLE;
-		desc.SampleDesc.Count = 1;
-		desc.SampleDesc.Quality = 0;
-		desc.MipLevels = 1;
-		desc.CPUAccessFlags = 0;
-		desc.Usage = D3D11_USAGE_DEFAULT;
-
-		hr = pDevice->CreateTexture2D(&desc, 0, &pGDIImage);
-
-		if (FAILED(hr)) {
-			SAFE_RELEASE(pDesktopDuplication);
-			return false;
-		}
-
-		if (pGDIImage == NULL) {
-			SAFE_RELEASE(pDesktopDuplication);
-			return false;
-		}
-		
-		desc.Width = pOutputDuplDesc.ModeDesc.Width;
-
-		desc.Height = pOutputDuplDesc.ModeDesc.Height;
-
-		desc.Format = pOutputDuplDesc.ModeDesc.Format;
-
-		desc.ArraySize = 1;
-
-		desc.BindFlags = 0;
-
-		desc.MiscFlags = 0;
-
-		desc.SampleDesc.Count = 1;
-
-		desc.SampleDesc.Quality = 0;
-
-		desc.MipLevels = 1;
-
-		desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ | D3D11_CPU_ACCESS_WRITE;
-		desc.Usage = D3D11_USAGE_STAGING;
-
-		hr = pDevice->CreateTexture2D(&desc, NULL, &pDestImage);
-		if (FAILED(hr)) {
-			SAFE_RELEASE(pGDIImage);
-			SAFE_RELEASE(pDesktopDuplication);
-			return false;
-		}
 
 		return true;
 	}
 
-	HRESULT AcquireNextFrame(UINT timeout, IDXGIResource **resource) 
+	bool CaptureDesktop()
 	{
-		HRESULT hr = pDesktopDuplication->AcquireNextFrame(
-			timeout,
-			&lFrameInfo,
-			resource);
+		auto hr = S_OK;
+		if (!pDesktopDuplication)
+			return false;
 
-		return hr;
-	}
-
-	HBITMAP CaptureDesktop()
-	{
-
-		IDXGIResource* lDesktopResource = NULL;
-		ID3D11Texture2D* pDestImage = NULL;
-
-		HRESULT hr = E_FAIL;
-
-		D3D11_TEXTURE2D_DESC desc = { 0 };
-		desc.Width = pOutputDuplDesc.ModeDesc.Width;
-		desc.Height = pOutputDuplDesc.ModeDesc.Height;
-		desc.Format = pOutputDuplDesc.ModeDesc.Format;
-		desc.ArraySize = 1;
-		desc.SampleDesc.Count = 1;
-		desc.SampleDesc.Quality = 0;
-		desc.MipLevels = 1;
-		desc.BindFlags = 0;
-		desc.MiscFlags = 0;
-		desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ | D3D11_CPU_ACCESS_WRITE;
-		desc.Usage = D3D11_USAGE_STAGING;
-
-		hr = pDevice->CreateTexture2D(&desc, NULL, &pDestImage);
-		if (FAILED(hr)) 
+		if (hasFrameLocked)
 		{
-			OutputDebugString(L"DX::CaptureDesktop failed to create destination texture2d.\n");
-			return NULL;
+			hasFrameLocked = false;
+			pDesktopDuplication->ReleaseFrame();
 		}
 
-		hr = AcquireNextFrame(750, &lDesktopResource);
+		CComPtr<IDXGIResource> pDeskRes = nullptr;
+		DXGI_OUTDUPL_FRAME_INFO frameInfo;
+		hr = pDesktopDuplication->AcquireNextFrame(0, &frameInfo, &pDeskRes);
 		if (FAILED(hr))
 		{
-			if ((hr != DXGI_ERROR_ACCESS_LOST) && (hr != DXGI_ERROR_WAIT_TIMEOUT)) {
+			if ((hr != DXGI_ERROR_ACCESS_LOST) && (hr != DXGI_ERROR_WAIT_TIMEOUT))
+			{
 				OutputDebugString(L"DX::CaptureDesktop -> Failed to acquire frame.\n");
-				SAFE_RELEASE(lDesktopResource);
-				SAFE_RELEASE(pAcquiredDesktopImage);
-				return NULL;
+				return false;
 			}
 			else if (hr == DXGI_ERROR_WAIT_TIMEOUT) {
 				OutputDebugString(L"DX::CaptureDesktop -> DXGI WAIT TIMEOUT.\n");
-				SAFE_RELEASE(lDesktopResource);
-				SAFE_RELEASE(pAcquiredDesktopImage);
-				return NULL;
+				return false;
 			}
 		}
+
+		hasFrameLocked = true;
+
+		CComPtr<ID3D11Texture2D> gpuTex = nullptr;
+		hr = pDeskRes->QueryInterface(__uuidof(ID3D11Texture2D), (void**)&gpuTex);
 		
-		if (pAcquiredDesktopImage) {
-			SAFE_RELEASE(pAcquiredDesktopImage);
+		if (FAILED(hr)) {
+			// not expected
+			return false;
 		}
 
-		//OutputDebugString(L"DX::AcquireNextFrame returned with SUCCESS.\n");
-		hr = lDesktopResource->QueryInterface(__uuidof(ID3D11Texture2D), (void**)&pAcquiredDesktopImage);
+		CComPtr<ID3D11Texture2D> cpuTex = nullptr;
+
+		D3D11_TEXTURE2D_DESC desc;
+		ZeroMemory(&desc, sizeof(D3D11_TEXTURE2D_DESC));
+
+		gpuTex->GetDesc(&desc);
+		desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE | D3D11_CPU_ACCESS_READ;
+		desc.Usage = D3D11_USAGE_STAGING;
+		desc.BindFlags = 0;
+		desc.MiscFlags = 0; // D3D11_RESOURCE_MISC_GDI_COMPATIBLE ?
 		
-		SAFE_RELEASE(lDesktopResource);
-
-		pDeviceContext->CopyResource(pDestImage, pAcquiredDesktopImage);
-
-		if (pDestImage == NULL) 
+		hr = pDevice->CreateTexture2D(&desc, nullptr, &cpuTex);
+		if (SUCCEEDED(hr)) 
 		{
-			OutputDebugString(L"DX::CaptureDesktop->Destination Texture2D is NULL.\n");
-			SAFE_RELEASE(pAcquiredDesktopImage);
-			return NULL;
+			pDeviceContext->CopyResource(cpuTex, gpuTex);
 		}
-		
-		SAFE_RELEASE(pAcquiredDesktopImage);
+		else {
+			// not expected
+			return false;
+		}
 
-		
-		// Copy image into GDI drawing texture
-		pDeviceContext->CopyResource(pGDIImage, pAcquiredDesktopImage);
-		
-		// Copy image into CPU access texture
-		pDeviceContext->CopyResource(pDestImage, pGDIImage);
-		SAFE_RELEASE(pGDIImage);
-		
-		// Draw cursor image into GDI drawing texture
-		IDXGISurface1* lIDXGISurface1;
-		hr = pGDIImage->QueryInterface(IID_PPV_ARGS(&lIDXGISurface1));
+		D3D11_MAPPED_SUBRESOURCE sr;
+		ZeroMemory(&sr, sizeof(D3D11_MAPPED_SUBRESOURCE));
 
-		CURSORINFO lCursorInfo = { 0 };
-
-		lCursorInfo.cbSize = sizeof(lCursorInfo);
-
-		auto lBoolres = GetCursorInfo(&lCursorInfo);
-
-		if (lBoolres == TRUE)
+		hr = pDeviceContext->Map(cpuTex, 0, D3D11_MAP_READ, 0, &sr);
+		if (SUCCEEDED(hr)) 
 		{
-			if (lCursorInfo.flags == CURSOR_SHOWING)
+			if (latestBitmap.width != desc.Width || latestBitmap.height != desc.Height) 
 			{
-				auto lCursorPosition = lCursorInfo.ptScreenPos;
-
-				auto lCursorSize = lCursorInfo.cbSize;
-
-				HDC  lHDC;
-
-				lIDXGISurface1->GetDC(FALSE, &lHDC);
-
-				DrawIconEx(
-					lHDC,
-					lCursorPosition.x,
-					lCursorPosition.y,
-					lCursorInfo.hCursor,
-					0,
-					0,
-					0,
-					0,
-					DI_NORMAL | DI_DEFAULTSIZE);
-
-				lIDXGISurface1->ReleaseDC(NULL);
-				lHDC = NULL;
+				latestBitmap.width = desc.Width;
+				latestBitmap.height = desc.Height;
+				latestBitmap.Buffer.clear();
+				latestBitmap.Buffer.resize(desc.Width * desc.Height * 4);
 			}
+			for (int y = 0; y < (int)desc.Height; y++)
+				memcpy(latestBitmap.Buffer.data() + y * desc.Width * 4, (uint8_t*)sr.pData + sr.RowPitch * y, desc.Width * 4);
 
+			pDeviceContext->Unmap(cpuTex, 0);
 		}
-		
-		//-- causing memory leak.
-		HBITMAP gdiTexture = D3D11_CreateHBITMAP(pDestImage);
-		
-		if (gdiTexture)
+		else 
 		{
-			hr = ReleaseFrame();
-
-			if (hr == S_OK) 
-			{
-				if (pDestImage) {
-					pDestImage->Release();
-				}
-				return gdiTexture;
-			}
-			else 
-			{
-				OutputDebugString(L"Unable to release frame.");
-				return NULL;
-			}
+			return false;
 		}
-		return NULL;
+
+		CapturedBitmap = D3D11_CreateHBITMAP(cpuTex);
+		
+		return true;
 	}
 
 	HBITMAP D3D11_CreateHBITMAP(_In_ ID3D11Texture2D* src) {
@@ -333,14 +235,18 @@ public:
 		D3D11_TEXTURE2D_DESC desc = { 0 };
 		src->GetDesc(&desc);
 
+		auto width = desc.Width;
+		auto height = desc.Height;
+		auto stride = width * height * 4;
+
 		D3D11_MAPPED_SUBRESOURCE resource;
 		UINT subresource = D3D11CalcSubresource(0, 0, 0);
 		pDeviceContext->Map(src, subresource, D3D11_MAP_READ, 0, &resource);
 		
 		BYTE* pData = reinterpret_cast<BYTE*>(resource.pData);
-
-		HBITMAP hBitmapTexture = CreateCompatibleBitmap(GetDC(NULL), pOutputDuplDesc.ModeDesc.Width, pOutputDuplDesc.ModeDesc.Height);
-		SetBitmapBits(hBitmapTexture, pOutputDuplDesc.ModeDesc.Width * pOutputDuplDesc.ModeDesc.Height * 4, pData);
+		
+		HBITMAP hBitmapTexture = CreateCompatibleBitmap(GetDC(NULL), width, height);
+		SetBitmapBits(hBitmapTexture, stride, pData);
 
 		pDeviceContext->Unmap(src, NULL);
 		
@@ -350,40 +256,30 @@ public:
 		return hBitmapTexture;
 	}
 
-	HRESULT ReleaseFrame()
-	{
-		HRESULT hr(E_FAIL);
-		hr = pDesktopDuplication->ReleaseFrame();
-		if (hr != S_OK) {
-			OutputDebugString(L"Failed to release frame.\n");
-		}
-		return hr;
-	}
-	HGDIOBJ D3D11_CaptureRegion(ID3D11Texture2D** src, UINT sx, UINT sy, UINT source_width, UINT source_height, ID3D11Texture2D** dest) 
-	{
-
-		return NULL;
-	}
 	void Release() 
 	{
-		SAFE_RELEASE(pAcquiredDesktopImage);
-		//SAFE_RELEASE(pDestImage);
+		CoUninitialize();
+
+		CapturedBitmap = NULL;
+
 		SAFE_RELEASE(pDesktopDuplication);
 		SAFE_RELEASE(pDeviceContext);
 		SAFE_RELEASE(pDevice);
 	}
-
-	ID3D11Texture2D* pAcquiredDesktopImage = 0;
+	
+	const HBITMAP GetCapturedBitmap() 
+	{
+		return CapturedBitmap;
+	}
 private:
-	ID3D11Device* pDevice = NULL;
+	ID3D11Device* pDevice = 0;
 	ID3D11DeviceContext* pDeviceContext = 0;
 	IDXGIOutputDuplication* pDesktopDuplication = 0;
-	ID3D11Texture2D* pGDIImage = 0;
-	ID3D11Texture2D* pDestImage = 0;
-	DXGI_OUTPUT_DESC pOutputDesc;
 	DXGI_OUTDUPL_DESC pOutputDuplDesc;
-	
-	DXGI_OUTDUPL_FRAME_INFO lFrameInfo;
+	bool hasFrameLocked;
+	NativeBitmap latestBitmap;
+	HBITMAP CapturedBitmap;
+
 protected:
 
 };

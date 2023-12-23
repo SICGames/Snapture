@@ -1,4 +1,5 @@
 #pragma once
+/*
 #include "DX.h"
 
 public ref class DXCaptureer {
@@ -11,7 +12,9 @@ public:
 		dxCapturerUnamanged = new DXCapturerUnmanaged();
 		return dxCapturerUnamanged->Initialize();
 	}
-	System::Drawing::Bitmap^ GrabDesktopScreen() {
+
+	System::Drawing::Bitmap^ GrabDesktopScreen() 
+	{
 		System::Drawing::Bitmap^ pBitmap = nullptr;
 		HGDIOBJ hGDIObj = dxCapturerUnamanged->CaptureDesktop();
 		if (hGDIObj) {
@@ -29,3 +32,4 @@ public:
 private:
 	DXCapturerUnmanaged* dxCapturerUnamanged;
 };
+*/

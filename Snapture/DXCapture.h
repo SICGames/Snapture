@@ -3,12 +3,14 @@
 
 namespace com {
 	namespace HellstormGames {
-		namespace Imaging {
+		namespace Imaging 
+		{
 			namespace DirectX
 			{
-				public ref class DXCaptureer {
+				public ref class DXCapture 
+				{
 				public:
-					DXCaptureer()
+					DXCapture()
 					{
 
 					}
@@ -16,16 +18,16 @@ namespace com {
 						dxCapturerUnamanged = new DXCapturerUnmanaged();
 						return dxCapturerUnamanged->Initialize();
 					}
-					System::Drawing::Bitmap^ GrabDesktopScreen() {
-						System::Drawing::Bitmap^ pBitmap = nullptr;
-						HGDIOBJ hGDIObj = dxCapturerUnamanged->CaptureDesktop();
-						if (hGDIObj) {
-							pBitmap = System::Drawing::Image::FromHbitmap((System::IntPtr)hGDIObj);
-							hGDIObj = NULL;
-							return pBitmap;
-						}
-						else
-							return nullptr;
+
+					bool CaptureDesktop() 
+					{
+						return dxCapturerUnamanged->CaptureDesktop();
+					}
+
+					System::Drawing::Bitmap^ GetCapturedBitmap() 
+					{
+						HGDIOBJ gdiObj = dxCapturerUnamanged->GetCapturedBitmap();
+						return System::Drawing::Image::FromHbitmap((System::IntPtr)gdiObj);
 					}
 					void Release() {
 						dxCapturerUnamanged->Release();
