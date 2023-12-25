@@ -29,7 +29,8 @@ namespace PrettyCaptureWinForms
 
         private void Button1_Click(object sender, EventArgs e)
         {
-            Snapture.CaptureDesktop();
+            Snapture.CaptureRegion(720, 200, 800, 800);
+
         }
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)

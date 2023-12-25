@@ -27,7 +27,13 @@ namespace com {
 					System::Drawing::Bitmap^ GetCapturedBitmap() 
 					{
 						HGDIOBJ gdiObj = dxCapturerUnamanged->GetCapturedBitmap();
-						return System::Drawing::Image::FromHbitmap((System::IntPtr)gdiObj);
+						System::Drawing::Bitmap ^ bitmap = System::Drawing::Image::FromHbitmap((System::IntPtr)gdiObj);
+						DeleteObject(gdiObj);
+						return bitmap;
+					}
+					bool CaptureRegion(int x, int y, int width, int height) 
+					{
+						return dxCapturerUnamanged->CaptureRegion(x, y, width, height);
 					}
 					void Release() {
 						dxCapturerUnamanged->Release();

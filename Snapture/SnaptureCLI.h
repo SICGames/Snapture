@@ -175,7 +175,6 @@ namespace com {
 					onFrameCapturingStarted(NULL, gcnew FrameCapturingEventArgs());
 				}
 
-
 				 void CaptureDesktop()
 				{
 					CaptureDesktopFrame();
@@ -190,16 +189,7 @@ namespace com {
 
 				 void CaptureRegion(int x, int y, int width, int height)
 				{
-					CapturingState = FrameCapturingState::CAPTURING;
-					if (CurrentBitmap)
-						CurrentBitmap = nullptr;
-
-					CurrentBitmap = CaptureScreenRegion(x, y, width, height);
-					
-					if (CurrentBitmap != nullptr) {
-						onFrameCaptured(nullptr, gcnew FrameCapturedEventArgs(CurrentBitmap, FrameCount));
-						FrameCount = FrameCount + 1;
-					}
+					CaptureScreenRegionFrame(x, y, width, height);
 				}
 
 				 void Stop() {
@@ -236,14 +226,18 @@ namespace com {
 					if (CurrentBitmap)
 						CurrentBitmap = nullptr;
 
-					CurrentBitmap = CaptureScreenRegion(x, y, width, height);
+					if (frameCaptureMethod == FrameCapturingMethod::DX) 
+					{
+						if (dxCapturer->CaptureRegion(x, y, width, height)) 
+							CurrentBitmap = dxCapturer->GetCapturedBitmap();
+					}
+					else 
+						CurrentBitmap = CaptureScreenRegion(x, y, width, height);
+
+					CurrentBitmap->SetResolution(Resolution, Resolution);
 
 					if (CurrentBitmap != nullptr)
 					{
-						if (CurrentBitmap != PreviousBitmap)
-						{
-							//PreviousBitmap = (System::Drawing::Bitmap^)CurrentBitmap->Clone();
-						}
 						onFrameCaptured(nullptr, gcnew FrameCapturedEventArgs(CurrentBitmap, FrameCount));
 						FrameCount = FrameCount + 1;
 					}
@@ -264,12 +258,10 @@ namespace com {
 					else
 						CurrentBitmap = CaptureScreen();
 
+					CurrentBitmap->SetResolution(Resolution, Resolution);
+
 					if (CurrentBitmap != nullptr)
 					{
-						if (CurrentBitmap != PreviousBitmap)
-						{
-							//PreviousBitmap = (System::Drawing::Bitmap^)CurrentBitmap->Clone();
-						}
 						onFrameCaptured(nullptr, gcnew FrameCapturedEventArgs(CurrentBitmap, FrameCount));
 						FrameCount = FrameCount + 1;
 					}
@@ -317,7 +309,7 @@ namespace com {
 					DeleteDC(hCaptureDC);
 
 					bitmap = System::Drawing::Image::FromHbitmap((IntPtr)hCaptureBitmap);
-					bitmap->SetResolution(Resolution, Resolution);
+					
 					DeleteObject(hCaptureBitmap);
 					return bitmap;
 				}
@@ -354,7 +346,7 @@ namespace com {
 					DeleteDC(hCaptureDC);
 
 					bitmap = System::Drawing::Image::FromHbitmap((IntPtr)hCaptureBitmap);
-					bitmap->SetResolution(Resolution, Resolution);
+					
 					DeleteObject(hCaptureBitmap);
 					return bitmap;
 				}
