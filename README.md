@@ -1,5 +1,5 @@
 # Snapture
-Screen capturing .NET Library that uses GDI+\DirectX. 
+Screen capturing is a .NET Framework CLI Library that uses GDI+\DirectX. 
 
 # Known Issues 
 DirectX Desktop Duplication eats up memory
