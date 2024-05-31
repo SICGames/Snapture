@@ -1,0 +1,44 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.7.34202.233
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Snapture", "Snapture\Snapture.vcxproj", "{458E569B-CC32-458C-8677-58B2F05049E0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PrettyCaptureWinForms", "Samples\PrettyCaptureWinForms\PrettyCaptureWinForms.csproj", "{52ADB2E4-8221-4ECB-B03C-3786FA356637}"
+	ProjectSection(ProjectDependencies) = postProject
+		{458E569B-CC32-458C-8677-58B2F05049E0} = {458E569B-CC32-458C-8677-58B2F05049E0}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{458E569B-CC32-458C-8677-58B2F05049E0}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{458E569B-CC32-458C-8677-58B2F05049E0}.Debug|Any CPU.Build.0 = Debug|x64
+		{458E569B-CC32-458C-8677-58B2F05049E0}.Debug|x64.ActiveCfg = Debug|x64
+		{458E569B-CC32-458C-8677-58B2F05049E0}.Debug|x64.Build.0 = Debug|x64
+		{458E569B-CC32-458C-8677-58B2F05049E0}.Release|Any CPU.ActiveCfg = Release|x64
+		{458E569B-CC32-458C-8677-58B2F05049E0}.Release|Any CPU.Build.0 = Release|x64
+		{458E569B-CC32-458C-8677-58B2F05049E0}.Release|x64.ActiveCfg = Release|x64
+		{458E569B-CC32-458C-8677-58B2F05049E0}.Release|x64.Build.0 = Release|x64
+		{52ADB2E4-8221-4ECB-B03C-3786FA356637}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{52ADB2E4-8221-4ECB-B03C-3786FA356637}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{52ADB2E4-8221-4ECB-B03C-3786FA356637}.Debug|x64.ActiveCfg = Debug|x64
+		{52ADB2E4-8221-4ECB-B03C-3786FA356637}.Debug|x64.Build.0 = Debug|x64
+		{52ADB2E4-8221-4ECB-B03C-3786FA356637}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{52ADB2E4-8221-4ECB-B03C-3786FA356637}.Release|Any CPU.Build.0 = Release|Any CPU
+		{52ADB2E4-8221-4ECB-B03C-3786FA356637}.Release|x64.ActiveCfg = Release|x64
+		{52ADB2E4-8221-4ECB-B03C-3786FA356637}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {C92D74D4-C5CD-4D8B-8E8F-C420F2DBBB6B}
+	EndGlobalSection
+EndGlobal
