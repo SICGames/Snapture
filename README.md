@@ -1,3 +1,6 @@
+## Project Discontinued as of Feb. 3, 2025. 
+Snapster replaces Snapture.
+
 # Snapture
 Screen capturing is a .NET Framework CLI Library that uses GDI+\DirectX. 
 
